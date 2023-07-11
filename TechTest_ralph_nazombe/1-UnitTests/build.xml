@@ -1,0 +1,106 @@
+<!--
+
+-->
+<project name="FixUnitTest" default="test" basedir=".">
+  <!-- Set default values for the project -->
+  <property file="build.properties" />
+
+  <tstamp>
+    <format property="today" pattern="yyyy-MM-dd" locale="en"/>
+  </tstamp>
+
+  <target name="init" description="Initialisation">
+    <!-- Set all the static variables you want here -->
+    <property name="build.dir" value="${basedir}/build"/>
+    <property name="build.classes.dir" value="${build.dir}/classes"/>
+    <property name="src.dir" value="${basedir}/src"/>
+    <property name="lib.dir" value="${basedir}/../lib"/>
+    <property name="project.name" value = "${ant.project.name}"/>
+    <property name="project.dir" value = "${basedir}"/>
+    <property name="project.resources" value="${basedir}/resources"/>
+    <property name="project.jar.version"  value="${today}-${user.name}"/>
+    <property name="project.jar.name" value = "${project.name}-${project.jar.version}.jar"/>
+    <property name="build.compiler" value="modern"/>
+    <property name="tests.output.dir"   value="${basedir}/testoutput"/>
+    <property name="html.tests.output.dir"  value="${tests.output.dir}/html"/>
+    <property name="junit.test.classes" value="**/*Test*.java" />
+  </target>
+
+  <target name="set.classpath" depends="init">
+    <path id="classpath">
+      <fileset dir="${lib.dir}">
+        <include name="*.jar"/>
+      </fileset>
+    </path>
+    <property name="echo.classpath" refid="classpath"/>
+    <echo message="java.home = ${java.home}"/>
+    <echo message="user.home = ${user.home}"/>
+    <echo message="compile classpath= ${echo.classpath}"/>
+    <echo message=""/>
+  </target>
+
+  <target name="compile" depends="set.classpath">
+    <mkdir dir="${build.classes.dir}"/>
+    <javac srcdir="${src.dir}" destdir="${build.classes.dir}"
+           includes="**/*.java" debug="on" debuglevel="source,lines"
+           deprecation="true" source="1.8" target="1.8"
+           includeantruntime="false">
+      <classpath refid="classpath"/>
+    </javac>
+  </target>
+
+  <target name="clean" depends="init" description="Delete compiled Objects">
+    <delete dir="${build.dir}"/>
+    <delete dir="${tests.output.dir}"/>
+  </target>
+
+  <target name="copy.properties">
+    <copy todir="${build.classes.dir}">
+      <fileset dir="${src.dir}">
+        <include name="**/*.properties"/>
+      </fileset>
+    </copy>
+  </target>
+
+
+  <target name="jar" depends="clean,compile" description="Build a jar">
+    <manifest file="${build.dir}/Manifest.mf">
+      <attribute name="Manifest-Version" value="1.0"/>
+      <attribute name="Built-By" value="${user.name}"/>
+    </manifest>
+    <jar jarfile="${build.dir}/${project.jar.name}"
+         compress="true"
+         manifest="${build.dir}/Manifest.mf">
+      <fileset dir="${build.classes.dir}"/>
+      <fileset dir="${src.dir}"/>
+    </jar>
+  </target>
+
+  <target name="test" depends="compile,copy.properties" description="Run tests">
+    <!-- clean up old reports -->
+    <delete dir="${tests.output.dir}"/>
+    <mkdir dir="${tests.output.dir}"/>
+    <mkdir dir="${html.tests.output.dir}"/>
+    <junit printsummary="true" fork="yes" failureproperty="junit.failed">
+      <formatter type="xml" />
+      <batchtest todir="${tests.output.dir}">
+        <fileset dir="${src.dir}">
+          <include name="${junit.test.classes}"/>
+          <exclude name="${junit.test.exclude.classes}"/>
+        </fileset>
+      </batchtest>
+      <classpath id="classpath.runtests">
+        <path refid="classpath"/>
+        <pathelement location="${build.classes.dir}"/>
+      </classpath>
+    </junit>
+    <junitreport todir="${tests.output.dir}">
+      <fileset dir="${tests.output.dir}">
+        <include name="TEST-*.xml" />
+      </fileset>
+      <report format="frames" todir="${html.tests.output.dir}" />
+    </junitreport>
+    <fail message="JUNIT tests failed, check output in ${tests.output.dir}" if="junit.failed"/>
+  </target>
+
+</project>

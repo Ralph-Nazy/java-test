@@ -1,0 +1,71 @@
+<!--
+
+-->
+<project name="jce" default="run" basedir=".">
+  <!-- Set default values for the project -->
+  <property file="build.properties" />
+
+  <tstamp>
+    <format property="today" pattern="yyyy-MM-dd" locale="en"/>
+  </tstamp>
+
+  <target name="init">
+    <!-- Set all the static variables you want here -->
+    <property name="build.dir" value="${basedir}/build"/>
+    <property name="build.classes.dir" value="${build.dir}/classes"/>
+    <property name="src.dir" value="${basedir}/src"/>
+    <property name="lib.dir" value="${basedir}/../lib"/>
+    <property name="project.name" value = "${ant.project.name}"/>
+    <property name="project.dir" value = "${basedir}"/>
+    <property name="project.resources" value="${basedir}/resources"/>
+    <property name="project.jar.version"  value="${today}-${user.name}"/>
+    <property name="project.jar.name" value = "${project.name}-${project.jar.version}.jar"/>
+    <property name="build.compiler" value="modern"/>
+    <property name="tests.output.dir"   value="${basedir}/testoutput"/>
+    <property name="html.tests.output.dir"  value="${tests.output.dir}/html"/>
+    <property name="junit.test.classes" value="**/*Test*.java" />
+  </target>
+
+  <target name="set.classpath" depends="init">
+    <path id="classpath">
+      <fileset dir="${lib.dir}">
+        <include name="*.jar"/>
+      </fileset>
+    </path>
+    <path id="runtime.classpath">
+      <pathelement location="${build.classes.dir}"/>
+      <path refid="classpath"/>
+    </path>
+
+    <property name="echo.classpath" refid="classpath"/>
+    <echo message="java.home = ${java.home}"/>
+    <echo message="user.home = ${user.home}"/>
+    <echo message="compile classpath= ${echo.classpath}"/>
+    <echo message=""/>
+  </target>
+
+  <target name="compile" depends="set.classpath">
+    <mkdir dir="${build.classes.dir}"/>
+    <javac srcdir="${src.dir}" destdir="${build.classes.dir}"
+           includes="**/*.java" debug="on" debuglevel="source,lines"
+           deprecation="true" source="1.8" target="1.8">
+      <classpath refid="classpath"/>
+    </javac>
+  </target>
+
+  <target name="clean" depends="init" description="Delete compiled Objects">
+    <delete dir="${build.dir}"/>
+    <delete dir="${tests.output.dir}"/>
+  </target>
+
+
+  <target name="run" depends="compile" description="Run the Program">
+    <java classname="com.adaptris.interview.jce.Main"
+          fork="true" dir="${project.dir}"
+          maxmemory="512m">
+      <arg line="${java-test.main.parameters}"/>
+      <classpath refid="runtime.classpath"/>
+    </java>
+  </target>
+
+</project>
